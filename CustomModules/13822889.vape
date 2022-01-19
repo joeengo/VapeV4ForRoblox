@@ -1,0 +1,276 @@
+local GuiLibrary = shared.GuiLibrary
+local players = game:GetService("Players")
+local lplr = players.LocalPlayer
+local workspace = game:GetService("Workspace")
+local lighting = game:GetService("Lighting")
+local cam = workspace.CurrentCamera
+local targetinfo = shared.VapeTargetInfo
+local collectionservice = game:GetService("CollectionService")
+local uis = game:GetService("UserInputService")
+local mouse = lplr:GetMouse()
+local robloxfriends = {}
+
+local function targetCheck(plr, check)
+	return (check and plr.Character.Humanoid.Health > 0 and plr.Character:FindFirstChild("ForceField") == nil or check == false)
+end
+
+local function isAlive(plr)
+	if plr then
+		return plr and plr.Character and plr.Character.Parent ~= nil and plr.Character:FindFirstChild("HumanoidRootPart") and plr.Character:FindFirstChild("Head") and plr.Character:FindFirstChild("Humanoid")
+	end
+	return lplr and lplr.Character and lplr.Character.Parent ~= nil and lplr.Character:FindFirstChild("HumanoidRootPart") and lplr.Character:FindFirstChild("Head") and lplr.Character:FindFirstChild("Humanoid")
+end
+
+local RenderStepTable = {}
+local function BindToRenderStep(name, num, func)
+	if RenderStepTable[name] == nil then
+		RenderStepTable[name] = game:GetService("RunService").RenderStepped:connect(func)
+	end
+end
+local function UnbindFromRenderStep(name)
+	if RenderStepTable[name] then
+		RenderStepTable[name]:Disconnect()
+		RenderStepTable[name] = nil
+	end
+end
+
+
+local function isPlayerTargetable(plr, target, friend, team)
+    return plr ~= lplr and GuiLibrary["ObjectsThatCanBeSaved"]["PlayersToggle"]["Api"]["Enabled"] and plr and isAlive(plr) and targetCheck(plr, target) and (GuiLibrary["ObjectsThatCanBeSaved"]["Ignore nakedToggle"]["Api"]["Enabled"] and nakedcheck(plr) or GuiLibrary["ObjectsThatCanBeSaved"]["Ignore nakedToggle"]["Api"]["Enabled"] == false) and ((team and plr.Team == lplr.Team) or (team == nil and shared.vapeteamcheck(plr)))
+end
+
+local function vischeck(pos, pos2, ignore)
+	local vistab = cam:GetPartsObscuringTarget({pos, pos2}, ignore)
+	for i,v in pairs(vistab) do
+		print(i,v:GetFullName())
+	end
+	return not unpack(vistab)
+end
+
+local function GetAllNearestHumanoidToPosition(distance, amount)
+	local returnedplayer = {}
+	local currentamount = 0
+    if isAlive() then
+        for i, v in pairs(players:GetChildren()) do
+            if isPlayerTargetable(v, true, true) and v.Character:FindFirstChild("HumanoidRootPart") and v.Character:FindFirstChild("Head") and currentamount < amount then
+                local mag = (lplr.Character.HumanoidRootPart.Position - v.Character.HumanoidRootPart.Position).magnitude
+                if mag <= distance then
+                    table.insert(returnedplayer, v)
+					currentamount = currentamount + 1
+                end
+            end
+        end
+	end
+	return returnedplayer
+end
+
+local function GetNearestHumanoidToPosition(distance)
+	local closest, returnedplayer = distance, nil
+    if isAlive() then
+        for i, v in pairs(players:GetChildren()) do
+            if isAlive(v) and v.Character:FindFirstChild("HumanoidRootPart") and v.Character:FindFirstChild("Head") then
+                local mag = (lplr.Character.HumanoidRootPart.Position - v.Character.HumanoidRootPart.Position).magnitude
+                if mag <= closest then
+                    closest = mag
+                    returnedplayer = v
+                end
+            end
+        end
+	end
+	return returnedplayer
+end
+
+local function GetNearestHumanoidToMouse(distance, checkvis)
+    local closest, returnedplayer = distance, nil
+    if isAlive() then
+        for i, v in pairs(players:GetChildren()) do
+            if isPlayerTargetable(v, true, true) and v.Character:FindFirstChild("HumanoidRootPart") and v.Character:FindFirstChild("Head") and (checkvis == false or checkvis and (vischeck(v.Character, "Head") or vischeck(v.Character, "HumanoidRootPart"))) then
+                local vec, vis = cam:WorldToScreenPoint(v.Character.HumanoidRootPart.Position)
+                if vis then
+                    local mag = (uis:GetMouseLocation() - Vector2.new(vec.X, vec.Y)).magnitude
+                    if mag <= closest then
+                        closest = mag
+                        returnedplayer = v
+                    end
+                end
+            end
+        end
+    end
+    return returnedplayer
+end
+
+local flyspeed = {["Value"] = 1}
+local flyverticalspeed = {["Value"] = 1}
+local flyupanddown = {["Enabled"] = false}
+local flymethod = {["Value"] = "Normal"}
+local flyposy = 0
+local flyup = false
+local flydown = false
+local flypress
+local flyendpress
+local bodyvelofly
+local fly = GuiLibrary["ObjectsThatCanBeSaved"]["BlatantWindow"]["Api"].CreateOptionsButton({
+    ["Name"] = "CarFly",
+    ["Function"] = function(callback) 
+        if callback then
+            if lplr.Character.Humanoid.Sit then
+                local seatPart = lplr.Character.Humanoid.SeatPart
+                local car = seatPart.Parent
+                local prim = car.PrimaryPart
+                if isAlive() then
+                    flyposy = lplr.Character.HumanoidRootPart.CFrame.p.Y
+                end
+                flypress = game:GetService("UserInputService").InputBegan:connect(function(input1)
+                    if flyupanddown["Enabled"] and game:GetService("UserInputService"):GetFocusedTextBox() == nil then
+                        if input1.KeyCode == Enum.KeyCode.RightAlt then
+                            flyup = true
+                        end
+                        if input1.KeyCode == Enum.KeyCode.LeftControl then
+                            flydown = true
+                        end
+                    end
+                end)
+                flyendpress = game:GetService("UserInputService").InputEnded:connect(function(input1)
+                    if input1.KeyCode == Enum.KeyCode.RightAlt then
+                        flyup = false
+                    end
+                    if input1.KeyCode == Enum.KeyCode.LeftControl then
+                        flydown = false
+                    end
+                end)
+                BindToRenderStep("cFly", 1, function(delta) 
+                    if isAlive() then
+                        if flymethod["Value"] == "Normal" then
+                            if (bodyvelofly == nil or bodyvelofly ~= nil and bodyvelofly.Parent ~= prim) then
+                                bodyvelofly = Instance.new("BodyVelocity")
+                                bodyvelofly.Parent = prim
+                                bodyvelofly.MaxForce = Vector3.new(100000, 100000, 100000)
+                            else
+                                bodyvelofly.Velocity = (lplr.Character.Humanoid.MoveDirection * flyspeed["Value"]) + Vector3.new(0, (flyup and flyverticalspeed["Value"] or 0) + (flydown and -flyverticalspeed["Value"] or 0), 0)
+                            end
+                        end
+                    end
+                end)
+            end
+		else
+			if bodyvelofly then
+				bodyvelofly:Remove()
+			end
+			flyup = false
+			flydown = false
+			flypress:Disconnect()
+			flyendpress:Disconnect()
+			UnbindFromRenderStep("cFly")
+		end
+    end,
+    ["HoverText"] = "flying lol"
+})
+
+flyspeed = fly.CreateSlider({
+	["Name"] = "Speed",
+	["Min"] = 1,
+	["Max"] = 150, 
+	["Function"] = function(val) end
+})
+flyverticalspeed = fly.CreateSlider({
+	["Name"] = "Vertical Speed",
+	["Min"] = 1,
+	["Max"] = 150, 
+	["Function"] = function(val) end
+})
+flyupanddown = fly.CreateToggle({
+	["Name"] = "Vertical motion", 
+	["Function"] = function() end
+})
+
+local bodyspin
+local spinbotspeed = {["Value"] = 1}
+local spinbot = GuiLibrary["ObjectsThatCanBeSaved"]["BlatantWindow"]["Api"].CreateOptionsButton({
+    ["Name"] = "CarSpin",
+    ["Function"] = function(callback)
+        if callback then
+            local saved
+            BindToRenderStep("CarSpinBot", 1, function()
+                if isAlive() then
+                    if lplr.Character.Humanoid.Sit then
+                        local seatPart = lplr.Character.Humanoid.SeatPart
+                        local car = seatPart.Parent
+                        local prim = car.PrimaryPart
+                        prim.Velocity = Vector3.new(0,0,0)
+                        if (bodyspin == nil or bodyspin ~= nil and bodyspin.Parent ~= prim) then
+                            bodyspin = Instance.new("BodyAngularVelocity")
+                            bodyspin.MaxTorque = Vector3.new(0, math.huge, 0)
+                            bodyspin.AngularVelocity = Vector3.new(0, spinbotspeed["Value"], 0)
+                            bodyspin.Parent = prim
+                        else
+                            bodyspin.AngularVelocity = Vector3.new(0, spinbotspeed["Value"], 0)
+                        end
+                    end
+                end
+            end)
+        else
+            if bodyspin then
+                bodyspin:Remove()
+            end
+            UnbindFromRenderStep("CarSpinBot")
+        end
+    end,
+    ["HoverText"] = "troll"
+})
+spinbotspeed = spinbot.CreateSlider({
+    ["Name"] = "Speed",
+    ["Min"] = 1,
+    ["Max"] = 100,
+    ["Default"] = 15,
+    ["Function"] = function() end
+})
+local t = GuiLibrary["ObjectsThatCanBeSaved"]["BlatantWindow"]["Api"].CreateOptionsButton({
+    ["Name"] = "CarTP",
+    ["Function"] = function(callback)
+        if callback then
+            local saved = mouse.Hit.p
+            BindToRenderStep("troll", 1, function()
+                if isAlive() then
+                    if lplr.Character.Humanoid.Sit then
+                        local seatPart = lplr.Character.Humanoid.SeatPart
+                        local car = seatPart.Parent
+                        local prim = car.PrimaryPart
+                        car:SetPrimaryPartCFrame(CFrame.new(saved))
+                    end
+                end
+            end)
+        else
+            UnbindFromRenderStep("troll")
+        end
+    end,
+    ["HoverText"] = "troll"
+})
+
+local pt = GuiLibrary["ObjectsThatCanBeSaved"]["BlatantWindow"]["Api"].CreateOptionsButton({
+    ["Name"] = "CarPlayerTP",
+    ["Function"] = function(callback)
+        if callback then
+            local saved = mouse.Hit.p
+            BindToRenderStep("TP", 1, function()
+                if isAlive() then
+                    if lplr.Character.Humanoid.Sit then
+                        local t = {}
+                        for i,v in pairs(players:GetPlayers()) do 
+                            if v.Name ~= "TheFlukeHusky" and v~=lplr then 
+                                table.insert(t,v)
+                            end
+                        end
+                        local seatPart = lplr.Character.Humanoid.SeatPart
+                        local car = seatPart.Parent
+                        local prim = car.PrimaryPart
+                        local plr = t[math.random(1, #t)]
+                        car:SetPrimaryPartCFrame(plr.Character.HumanoidRootPart.CFrame)
+                    end
+                end
+            end)
+        else
+            UnbindFromRenderStep("TP")
+        end
+    end,
+    ["HoverText"] = "player"
+})
