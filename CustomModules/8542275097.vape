@@ -420,6 +420,7 @@ NoFall = GuiLibrary["ObjectsThatCanBeSaved"]["BlatantWindow"]["Api"].CreateOptio
 							speedWasOn = true
 						end
 						repeat wait() until char.Humanoid.FloorMaterial ~= nil
+						char.Humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
 						UnbindFromStepped("NoFallVelo")
 						if BodyVelo then 
 							BodyVelo:Destroy()
