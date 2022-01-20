@@ -72,6 +72,15 @@ if isfile("vape/EngoModules/"..tostring(game.PlaceId)..".vape") then
 	loadstring(readfile("vape/EngoModules/"..tostring(game.PlaceId)..".vape"))()
 end
 
+local exclusions = {"xray", "freecam", "panic", "chatspammer", "nickhider", "speed", "fly"}
+for i,_ in pairs(GuiLibrary["ObjectsThatCanBeSaved"]) do
+    if i:lower():find("optionsbutton") then 
+        if not table.find(exclusions, i:lower():gsub("optionsbutton", "")) then
+            GuiLibrary["RemoveObject"](i)
+        end
+    end
+end
+
 local function createwarning(title, text, delay)
 	pcall(function()
 		local frame = GuiLibrary["CreateNotification"](title, text, delay, "vape/assets/WarningNotification.png")
@@ -250,18 +259,33 @@ end)
 
 getfunctions()
 
+local autoqueuedelay = {["Value"] = 0}
 local autoqueue = {["Enabled"] = false}
 autoqueue = GuiLibrary["ObjectsThatCanBeSaved"]["BlatantWindow"]["Api"].CreateOptionsButton({
     ["Name"] = "AutoQueue",
     ["Function"] = function(callback)
-        local _t = tick()
-        repeat wait(1)
-            game:GetService("ReplicatedStorage")["events-shared/events@GlobalEvents"].UpdateMatchmakingStatus:FireServer(true)
-            if (_t - tick()) > 10 then 
-                game:GetService("ReplicatedStorage")["events-shared/events@GlobalEvents"].UpdateMatchmakingStatus:FireServer(false)
-            end
-        until autoqueue["Enabled"] == false
+        spawn(function()
+            task.wait(autoqueuedelay["Value"])
+            local _t = tick()
+            repeat wait(1)
+                game:GetService("ReplicatedStorage")["events-shared/events@GlobalEvents"].UpdateMatchmakingStatus:FireServer(true)
+                if (_t - tick()) > 10 then 
+                    game:GetService("ReplicatedStorage")["events-shared/events@GlobalEvents"].UpdateMatchmakingStatus:FireServer(false)
+                end
+            until autoqueue["Enabled"] == false
+        end)
+        if not callback then
+            game:GetService("ReplicatedStorage")["events-shared/events@GlobalEvents"].UpdateMatchmakingStatus:FireServer(false)
+        end
     end,
     ["HoverText"] = "Automatically queue",
+})
+
+autoqueuedelay = autoqueue.CreateSlider({
+    ["Name"] = "Delay",
+    ["Function"] = function() end,
+    ["HoverText"] = "Delay between joining the queue",
+    ["Min"] = 0,
+    ["Max"] = 10,
 })
 
