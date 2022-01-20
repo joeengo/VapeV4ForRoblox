@@ -398,49 +398,26 @@ local BodyVelo
 local speedWasOn
 NoFall = GuiLibrary["ObjectsThatCanBeSaved"]["BlatantWindow"]["Api"].CreateOptionsButton({
 	["Name"] = "NoFall",
-	["HoverText"] = "Stop fall damage",
-	["ExtraText"] = function() return " Prevent" end,
+	["HoverText"] = "Stop fall damage\nUse speed to prevent weird falling",
+	["ExtraText"] = function() return " Experimental" end,
 	["Function"] = function(callback)
 		if callback then
 			local char = lplr.Character or lplr.CharacterAdded:Wait()
 			NoFallConnection = char:WaitForChild("Humanoid").StateChanged:Connect(function(oldState, newState)
 				if newState == Enum.HumanoidStateType.Freefall then 
 					spawn(function()
+						char.Humanoid:SetStateEnabled(Enum.HumanoidStateType.Freefall, false)
 						char.Humanoid:ChangeState(Enum.HumanoidStateType.Flying)
-						BodyVelo = BodyVelo or Instance.new("BodyVelocity")
-						BodyVelo.Parent = lplr.Character.HumanoidRootPart
-						BodyVelo.MaxForce = Vector3.new(100000, 0, 100000)
-						BindToStepped("NoFallVelo", 1, function(delta)
-							BodyVelo.Velocity = lplr.Character.Humanoid.MoveDirection * 22
-							local newvelo = lplr.Character.Humanoid.MoveDirection * 50
-							lplr.Character.HumanoidRootPart.Velocity = Vector3.new(newvelo.X, lplr.Character.HumanoidRootPart.Velocity.Y, newvelo.Z)
-						end)
-						if GuiLibrary["ObjectsThatCanBeSaved"]["SpeedOptionsButton"]["Enabled"] then
-							GuiLibrary["ObjectsThatCanBeSaved"]["SpeedOptionsButton"]["ToggleButton"](false)
-							speedWasOn = true
-						end
 						repeat wait() until char.Humanoid.FloorMaterial ~= nil
-						char.Humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
-						UnbindFromStepped("NoFallVelo")
-						if BodyVelo then 
-							BodyVelo:Destroy()
-							BodyVelo = nil
-						end
-						if speedWasOn and GuiLibrary["ObjectsThatCanBeSaved"]["SpeedOptionsButton"]["Enabled"]==false  then 
-							GuiLibrary["ObjectsThatCanBeSaved"]["SpeedOptionsButton"]["ToggleButton"](false)
-							speedWasOn = false
-						end
+						--char.Humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
+						char.Humanoid:SetStateEnabled(Enum.HumanoidStateType.Freefall, true)
 					end)
 				end
 			end)
 		else
+			lplr.Character.Humanoid:SetStateEnabled(Enum.HumanoidStateType.Freefall, true)
 			if NoFallConnection then 
 				NoFallConnection:Disconnect()
-			end
-			UnbindFromStepped("NoFallVelo")
-			if BodyVelo then 
-				BodyVelo:Destroy()
-				BodyVelo = nil
 			end
 		end
 	end,

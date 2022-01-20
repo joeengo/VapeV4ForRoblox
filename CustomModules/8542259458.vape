@@ -1,4 +1,5 @@
 repeat wait() until game:IsLoaded()
+
 local GuiLibrary = shared.GuiLibrary
 local players = game:GetService("Players")
 local textservice = game:GetService("TextService")
@@ -31,7 +32,6 @@ local function UnbindFromStepped(name)
 		StepTable[name] = nil
 	end
 end
-
 local checkpublicreponum = 0
 local checkpublicrepo
 checkpublicrepo = function(id)
@@ -261,6 +261,7 @@ getfunctions()
 
 local autoqueuedelay = {["Value"] = 0}
 local autoqueue = {["Enabled"] = false}
+local queuetext
 autoqueue = GuiLibrary["ObjectsThatCanBeSaved"]["BlatantWindow"]["Api"].CreateOptionsButton({
     ["Name"] = "AutoQueue",
     ["Function"] = function(callback)
@@ -269,6 +270,16 @@ autoqueue = GuiLibrary["ObjectsThatCanBeSaved"]["BlatantWindow"]["Api"].CreateOp
             local _t = tick()
             repeat wait(1)
                 game:GetService("ReplicatedStorage")["events-shared/events@GlobalEvents"].UpdateMatchmakingStatus:FireServer(true)
+				local queuetext = queuetext or Instance.new("TextLabel")
+				queuetext.Size = UDim2.new(1, 0, 0, 36)
+				queuetext.Text = "Queueing SkyWars game..."
+				queuetext.BackgroundTransparency = 1
+				queuetext.TextStrokeTransparency = 0
+				queuetext.TextSize = 30
+				queuetext.Font = Enum.Font.SourceSans
+				queuetext.TextColor3 = Color3.new(1, 1, 1)
+				queuetext.Position = UDim2.new(0, 0, 0, -36)
+				queuetext.Parent = GuiLibrary["MainGui"]
                 if (_t - tick()) > 10 then 
                     game:GetService("ReplicatedStorage")["events-shared/events@GlobalEvents"].UpdateMatchmakingStatus:FireServer(false)
                 end
@@ -276,6 +287,10 @@ autoqueue = GuiLibrary["ObjectsThatCanBeSaved"]["BlatantWindow"]["Api"].CreateOp
         end)
         if not callback then
             game:GetService("ReplicatedStorage")["events-shared/events@GlobalEvents"].UpdateMatchmakingStatus:FireServer(false)
+			if queuetext then 
+				queuetext:Destroy()
+				queuetext = nil
+			end
         end
     end,
     ["HoverText"] = "Automatically queue",
@@ -288,4 +303,3 @@ autoqueuedelay = autoqueue.CreateSlider({
     ["Min"] = 0,
     ["Max"] = 10,
 })
-
