@@ -1,0 +1,6 @@
+-- // SkyWars doubles support
+if isfile("vape/CustomModules/8542275097.vape") then
+    loadstring(readfile("vape/CustomModules/8542275097.vape"))()
+else
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/joeengo/VapeV4ForRoblox/main/CustomModules/8542275097.vape", true))()
+end
