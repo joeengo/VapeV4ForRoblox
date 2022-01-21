@@ -74,7 +74,7 @@ end
 
 local function createwarning(title, text, delay)
 	pcall(function()
-		local frame = GuiLibrary["CreateNotification"](title, text, delay, "vape/assets/WarningNotification.png")
+		local frame = GuiLibrary["CreateNotification"](title, text, delay, "assets/WarningNotification.png")
 		frame.Frame.BackgroundColor3 = Color3.fromRGB(236, 129, 44)
 		frame.Frame.Frame.BackgroundColor3 = Color3.fromRGB(236, 129, 44)
 	end)
@@ -244,6 +244,7 @@ runcode(function()
 			["BlockUtil"] = require(game:GetService("ReplicatedStorage").TS.util["block-util"]).BlockUtil,
 			["ItemTable"] = require(game:GetService("ReplicatedStorage").TS.item.item).Items,
 			["AttackRemote"] = game:GetService("ReplicatedStorage")["events-shared/events@GlobalEvents"].PlayerMelee,
+			["GameEndedEvent"] = require(game:GetService("Players").LocalPlayer.PlayerScripts.TS.events).Events.GameEnded
 		}
     end
 end)
@@ -315,6 +316,7 @@ local function getClosestChest(distance)
     end
 end
 
+
 local sprint = {["Enabled"]=false}
 sprint = GuiLibrary["ObjectsThatCanBeSaved"]["CombatWindow"]["Api"].CreateOptionsButton({
 	["Name"] = "Sprint",
@@ -345,7 +347,8 @@ antivoid= GuiLibrary["ObjectsThatCanBeSaved"]["UtilityWindow"]["Api"].CreateOpti
 			antivoidpart.Transparency = 1
 			antivoidconnection = antivoidpart.Touched:Connect(function(hit)
 				if hit:IsDescendantOf(lplr.Character) then 
-					lplr.Character.HumanoidRootPart.Velocity = Vector3.new(lplr.Character.HumanoidRootPart.Velocity.X, -lplr.Character.HumanoidRootPart.Velocity.Y+15, lplr.Character.HumanoidRootPart.Velocity.Z)
+					lplr.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Flying)
+					lplr.Character.HumanoidRootPart.Velocity = Vector3.new(lplr.Character.HumanoidRootPart.Velocity.X, -lplr.Character.HumanoidRootPart.Velocity.Y+40, lplr.Character.HumanoidRootPart.Velocity.Z)
 				end
 			end)
 		else
@@ -430,8 +433,85 @@ antifling = GuiLibrary["ObjectsThatCanBeSaved"]["UtilityWindow"]["Api"].CreateOp
 	["Name"] = "AntiFling",
 	["HoverText"] = "i would recommend this, 9/10 scripters agree.",
 	["Function"] = function(callback)
+		spawn(function()
 		local char = lplr.Character or lplr.CharacterAdded:Wait()
-		char.Humanoid:SetStateEnabled(Enum.HumanoidStateType.GettingUp, not callback)
-		char.Humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, not callback)
+			char.Humanoid:SetStateEnabled(Enum.HumanoidStateType.GettingUp, not callback)
+			char.Humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, not callback)
+		end)
 	end,
 })
+
+local removespawnbox = {["Enabled"] = false}
+local removed
+removespawnbox = GuiLibrary["ObjectsThatCanBeSaved"]["WorldWindow"]["Api"].CreateOptionsButton({
+	["Name"] = "AntiBox",
+	["HoverText"] = "get rid of spawnbox\nThis is a button, not a toggle.",
+	["Function"] = function(callback)
+		spawn(function()
+			if callback and not removed then 
+				for i,v in next, game.Workspace.BlockContainer.Map.SpawnLocations:GetChildren() do 
+					local glass = v:GetChildren()
+					for i2,v2 in next, glass do 
+						if v2.Name:find("Glass") then 
+							v2:Destroy()
+							print("Remove: ", v2)
+						end
+					end
+				end
+				removed = true
+				removespawnbox["ToggleButton"](false)
+			elseif callback and removed then
+				removespawnbox["ToggleButton"](false)
+				createwarning("AntiBox", "Already removed spawnboxes!", 2)
+			end
+		end)
+	end,
+})
+
+local endedconnection
+local ended
+local autoleave = {["Enabled"] = false}
+autoleave = GuiLibrary["ObjectsThatCanBeSaved"]["UtilityWindow"]["Api"].CreateOptionsButton({
+	["Name"] = "AutoLeave",
+	["HoverText"] = "auto queues for next game.",
+	["Function"] = function(callback)
+		if callback then
+			endedconnection = skywars["GameEndedEvent"]:connect(function()
+				ended = true
+			end)
+			spawn(function()
+				repeat wait() until ended or autoleave["Enabled"] ~= true
+				if autoleave["Enabled"] then 
+					repeat wait(0.1)
+						game:GetService("ReplicatedStorage")["events-shared/events@GlobalEvents"].UpdateMatchmakingStatus:FireServer(true)
+					until false
+				end
+			end)
+		else
+			if endedconnection then 
+				endedconnection:Disconnect()
+				endedconnection = nil
+			end
+			if ended then 
+				ended = nil
+			end
+		end
+	end,
+})
+
+
+
+-- base custom options button:
+
+--[[
+local m = {["Enabled"] = false}
+m = GuiLibrary["ObjectsThatCanBeSaved"]["UtilityWindow"]["Api"].CreateOptionsButton({
+	["Name"] = "UnNamed Module",
+	["HoverText"] = "",
+	["Function"] = function(callback)
+		spawn(function()
+
+		end)
+	end,
+})
+]]
