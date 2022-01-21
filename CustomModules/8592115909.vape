@@ -1,5 +1,5 @@
 -- // SkyWars doubles support
-loadstring(game:HttpGet("https://raw.githubusercontent.com/7GrandDadPGN/VapeV4ForRoblox/main/CustomModules/8542275097.vape", true))() -- // this should be removed when 7grandad updates his to support doubles
+shared.CustomSaveVape = 8542275097
 if isfile("vape/CustomModules/8542275097.vape") then
     loadstring(readfile("vape/CustomModules/8542275097.vape"))()
 else
