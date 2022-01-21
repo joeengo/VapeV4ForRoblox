@@ -470,6 +470,8 @@ removespawnbox = GuiLibrary["ObjectsThatCanBeSaved"]["WorldWindow"]["Api"].Creat
 
 local endedconnection
 local ended
+local queuetext
+local queuetextamt = 0
 local autoleave = {["Enabled"] = false}
 autoleave = GuiLibrary["ObjectsThatCanBeSaved"]["UtilityWindow"]["Api"].CreateOptionsButton({
 	["Name"] = "AutoLeave",
@@ -482,12 +484,34 @@ autoleave = GuiLibrary["ObjectsThatCanBeSaved"]["UtilityWindow"]["Api"].CreateOp
 			spawn(function()
 				repeat wait() until ended or autoleave["Enabled"] ~= true
 				if autoleave["Enabled"] then 
+					local text = "Queueing SkyWars game"
+					queuetext = queuetext or Instance.new("TextLabel")
+					queuetext.Size = UDim2.new(1, 0, 0, 36)
+					queuetext.Text = text
+					queuetext.BackgroundTransparency = 1
+					queuetext.TextStrokeTransparency = 0
+					queuetext.TextSize = 30
+					queuetext.Font = Enum.Font.SourceSans
+					queuetext.TextColor3 = Color3.new(1, 1, 1)
+					queuetext.Position = UDim2.new(0, 0, 0, -36)
+					queuetext.Parent = GuiLibrary["MainGui"]
+					spawn(function()
+						repeat wait(0.25) 
+							if queuetextamt == 3 then queuetextamt = 0 end
+							queuetextamt = queuetextamt + 1
+							queuetext.Text = text..string.rep(".", queuetextamt)
+						until false
+					end)
 					repeat wait(0.1)
 						game:GetService("ReplicatedStorage")["events-shared/events@GlobalEvents"].UpdateMatchmakingStatus:FireServer(true)
 					until false
 				end
 			end)
 		else
+			if queuetext then 
+				queuetext:Destroy()
+				queuetext = nil
+			end
 			if endedconnection then 
 				endedconnection:Disconnect()
 				endedconnection = nil
