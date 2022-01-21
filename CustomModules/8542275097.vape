@@ -409,8 +409,10 @@ NoFall = GuiLibrary["ObjectsThatCanBeSaved"]["BlatantWindow"]["Api"].CreateOptio
 						char.Humanoid:SetStateEnabled(Enum.HumanoidStateType.Freefall, false)
 						char.Humanoid:ChangeState(Enum.HumanoidStateType.Flying)
 						repeat wait() until char.Humanoid.FloorMaterial ~= nil
-						--char.Humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
 						char.Humanoid:SetStateEnabled(Enum.HumanoidStateType.Freefall, true)
+						char.Humanoid:ChangeState(Enum.HumanoidStateType.Physics)
+						wait(0.1)
+						char.Humanoid:ChangeState(Enum.HumanoidStateType.RunningNoPhysics)
 					end)
 				end
 			end)
@@ -423,3 +425,13 @@ NoFall = GuiLibrary["ObjectsThatCanBeSaved"]["BlatantWindow"]["Api"].CreateOptio
 	end,
 })
 
+local antifling = {["Enabled"] = false}
+antifling = GuiLibrary["ObjectsThatCanBeSaved"]["UtilityWindow"]["Api"].CreateOptionsButton({
+	["Name"] = "AntiFling",
+	["HoverText"] = "i would recommend this, 9/10 scripters agree.",
+	["Function"] = function(callback)
+		local char = lplr.Character or lplr.CharacterAdded:Wait()
+		char.Humanoid:SetStateEnabled(Enum.HumanoidStateType.GettingUp, not callback)
+		char.Humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, not callback)
+	end,
+})
