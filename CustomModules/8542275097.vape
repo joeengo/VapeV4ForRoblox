@@ -394,11 +394,9 @@ GuiLibrary["SelfDestructEvent"].Event:Connect(function()
 	shared.EngoVape["Velocity"] = false
 end)
 
+
 local NoFall = {["Enabled"] = false}
 local NoFallConnection
-local Disabled
-local BodyVelo
-local speedWasOn
 NoFall = GuiLibrary["ObjectsThatCanBeSaved"]["BlatantWindow"]["Api"].CreateOptionsButton({
 	["Name"] = "NoFall",
 	["HoverText"] = "Stop fall damage\nUse speed to prevent weird falling",
@@ -523,6 +521,45 @@ autoleave = GuiLibrary["ObjectsThatCanBeSaved"]["UtilityWindow"]["Api"].CreateOp
 	end,
 })
 
+GuiLibrary["RemoveObject"]("ChestStealerOptionsButton")
+local ChestOpen
+local ChestStealer = {["Enabled"] = false}
+local ChestBlacklist = {}
+ChestStealer = GuiLibrary["ObjectsThatCanBeSaved"]["BlatantWindow"]["Api"].CreateOptionsButton({
+	["Name"] = "ChestStealer",
+	["Function"] = function(callback)
+		if callback then
+			local chests = workspace.BlockContainer.Map.Chests:GetChildren()
+			ChestOpen = skywars["EventHandler"].ChestUpdated:connect(function(one, two, three)
+				if ChestBlacklist[one] == nil then
+					ChestBlacklist[one] = true
+					for i,v in pairs(two) do
+						skywars["EventHandler"].ChestUpdate(one, v.Type, -v.Quantity)
+					end
+					skywars["EventHandler"].ChestClose(one)
+				end
+			end)
+			spawn(function()
+				repeat
+					wait()
+					if isAlive() then
+						for i,v in pairs(chests) do
+							if v.PrimaryPart then
+								if (lplr.Character.HumanoidRootPart.Position - v.PrimaryPart.Position).magnitude <= 20 and ChestBlacklist[v] == nil then
+									skywars["EventHandler"].ChestOpen(v)
+								end
+							end
+						end
+					end
+				until (not ChestStealer["Enabled"])
+			end)
+		else
+			if ChestOpen then
+				ChestOpen:Disconnect()
+			end
+		end
+	end
+})
 
 
 -- base custom options button:
