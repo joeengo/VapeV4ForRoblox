@@ -415,6 +415,11 @@ local function createLabel(text, length)
 	return api
 end
 
+-- prepare:
+
+GuiLibrary["RemoveObject"]("ReachOptionsButton")
+GuiLibrary["RemoveObject"]("AimAssistOptionsButton")
+
 -- hooks and events for vape optimization:
 shared.EngoVape = shared.EngoVape or {}
 if not shared.EngoVape["Hooked"] then
@@ -456,6 +461,7 @@ runcode(function()
 		end,
 	})
 end)
+--[[
 runcode(function()
 	GuiLibrary["RemoveObject"]("LongJumpOptionsButton")
 	local LongJump = {["Enabled"] = false}
@@ -471,7 +477,7 @@ runcode(function()
 			end)
 		end,
 	})
-end)
+end)]]
 
 runcode(function()
 	local antivoidconnection
@@ -682,12 +688,15 @@ searchModule = GuiLibrary["ObjectsThatCanBeSaved"]["RenderWindow"]["Api"].Create
 	["Name"] = "ChestESP", 
 	["Function"] = function(callback) 
 		if callback then
-			searchRefresh()
-			searchRemove = workspace.BlockContainer.Map.Chests.ChildRemoved:connect(function(v)
-				local boxhandle = searchFindBoxHandle(v)
-				if boxhandle then
-					boxhandle:Remove()
-				end
+			spawn(function()
+				task.wait(0.25)
+				searchRefresh()
+				searchRemove = workspace.BlockContainer.Map.Chests.ChildRemoved:connect(function(v)
+					local boxhandle = searchFindBoxHandle(v)
+					if boxhandle then
+						boxhandle:Remove()
+					end
+				end)
 			end)
 		else
 			pcall(function()
@@ -715,33 +724,36 @@ runcode(function()
 		["Name"] = "ChestStealer",
 		["Function"] = function(callback)
 			if callback then
-				local chests = workspace.BlockContainer.Map.Chests:GetChildren()
-				ChestOpen = skywars["EventHandler"].ChestUpdated:connect(function(one, two, three)
-					if ChestBlacklist[one] == nil then
-						local handle = searchFindBoxHandle(one)
-						if handle then
-							handle:Destroy()
-						end
-						ChestBlacklist[one] = true
-						for i,v in pairs(two) do
-							skywars["EventHandler"].ChestUpdate(one, v.Type, -v.Quantity)
-						end
-						skywars["EventHandler"].ChestClose(one)
-					end
-				end)
 				spawn(function()
-					repeat
-						wait()
-						if isAlive() then
-							for i,v in pairs(chests) do
-								if v.PrimaryPart then
-									if (lplr.Character.HumanoidRootPart.Position - v.PrimaryPart.Position).magnitude <= 20 and ChestBlacklist[v] == nil then
-										skywars["EventHandler"].ChestOpen(v)
+					task.wait(0.25)
+					local chests = workspace.BlockContainer.Map.Chests:GetChildren()
+					ChestOpen = skywars["EventHandler"].ChestUpdated:connect(function(one, two, three)
+						if ChestBlacklist[one] == nil then
+							local handle = searchFindBoxHandle(one)
+							if handle then
+								handle:Destroy()
+							end
+							ChestBlacklist[one] = true
+							for i,v in pairs(two) do
+								skywars["EventHandler"].ChestUpdate(one, v.Type, -v.Quantity)
+							end
+							skywars["EventHandler"].ChestClose(one)
+						end
+					end)
+					spawn(function()
+						repeat
+							wait()
+							if isAlive() then
+								for i,v in pairs(chests) do
+									if v.PrimaryPart then
+										if (lplr.Character.HumanoidRootPart.Position - v.PrimaryPart.Position).magnitude <= 20 and ChestBlacklist[v] == nil then
+											skywars["EventHandler"].ChestOpen(v)
+										end
 									end
 								end
 							end
-						end
-					until (not ChestStealer["Enabled"])
+						until (not ChestStealer["Enabled"])
+					end)
 				end)
 			else
 				if ChestOpen then
@@ -773,8 +785,7 @@ runcode(function()
 						local v4 = GetNearestHumanoidToMouse(true, 99999999999, true)
 						if v4 then
 							local v5 = v4.Character.PrimaryPart.Position
-							v5 = v5 + Vector3.new(0, ((v5 - lplr.Character.PrimaryPart.Position).Magnitude) / 12, 0)
-							print(((v5 - lplr.Character.PrimaryPart.Position).Magnitude) / 12)
+							v5 = v5 + Vector3.new(0, ((v5 - lplr.Character.PrimaryPart.Position).Magnitude) / 14, 0)
 							if predict["Enabled"] then
 								local dir = (v4.Character.HumanoidRootPart.Velocity.X == 0 and Vector3.new(0, 0, 0) or Vector3.new(v4.Character.Humanoid.MoveDirection.X * v4.Character.Humanoid.WalkSpeed, v4.Character.HumanoidRootPart.Velocity.Y, v4.Character.Humanoid.MoveDirection.Z * v4.Character.Humanoid.WalkSpeed))
 								dir = Vector3.new(dir.X / 3, dir.Y / 4.5, dir.Z / 3) -- workout prediction

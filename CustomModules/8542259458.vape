@@ -252,7 +252,6 @@ runcode(function()
 			["ReplicaHandler"] = require(lplr.PlayerScripts.TS.replicas).Replicas,
 			["BlockUtil"] = require(game:GetService("ReplicatedStorage").TS.util["block-util"]).BlockUtil,
 			["ItemTable"] = require(game:GetService("ReplicatedStorage").TS.item.item).Items,
-			["AttackRemote"] = game:GetService("ReplicatedStorage")["events-shared/events@GlobalEvents"].PlayerMelee,
 		}
     end
 end)
@@ -270,7 +269,7 @@ autoqueue = GuiLibrary["ObjectsThatCanBeSaved"]["BlatantWindow"]["Api"].CreateOp
             task.wait(autoqueuedelay["Value"])
             local _t = tick()
             repeat wait(1)
-                game:GetService("ReplicatedStorage")["events-shared/events@GlobalEvents"].UpdateMatchmakingStatus:FireServer(true)
+                skywars["EventHandler"].UpdateMatchmakingStatus(true)
 				local text = "Queueing SkyWars game"
 				queuetext = queuetext or Instance.new("TextLabel")
 				queuetext.Size = UDim2.new(1, 0, 0, 36)
