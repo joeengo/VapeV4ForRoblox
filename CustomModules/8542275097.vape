@@ -356,6 +356,19 @@ local function getChests()
 	return game.Workspace.BlockContainer.Map.Chests:GetChildren()
 end
 
+local function playerCircle(point, radius)
+	spawn(function()
+		local x, z, r = point.X, point.Z, radius
+		for i = 1, 360, 9 do
+			wait()
+			local angle = i * math.pi / 180
+			local ptx, ptz = x + r * math.cos( angle ), z + r * math.sin( angle )
+			lplr.Character.HumanoidRootPart.CFrame = CFrame.new(Vector3.new(ptx, point.Y, ptz), old.LookVector)
+			lplr.Character.HumanoidRootPart.Velocity = Vector3.new(0,0,0)
+		end
+	end)
+end
+
 local function isOverPart(radius)
 	radius = radius or 99999999999
 	local raycastParams = RaycastParams.new();raycastParams.FilterType = Enum.RaycastFilterType.Blacklist;raycastParams.FilterDescendantsInstances = {lplr.Character, antivoidpart};raycastParams.IgnoreWater = true
@@ -614,7 +627,7 @@ runcode(function()
 					if autoleave["Enabled"] then
 						label = createLabel("Queueing new game")
 						spawn(function()
-							repeat wait(0.25) 
+							repeat wait(0.5) 
 								if queuetextamt == 3 then queuetextamt = 0 end
 								queuetextamt = queuetextamt + 1
 								if label then
@@ -622,8 +635,8 @@ runcode(function()
 								end
 							until false
 						end)
-						skywars["EventHandler"].UpdateMatchmakingStatus:fire(true)
 					end
+					skywars["EventHandler"].UpdateMatchmakingStatus:fire(true)
 				end)
 			else
 				if label then 
@@ -720,7 +733,7 @@ runcode(function()
 	GuiLibrary["RemoveObject"]("ChestStealerOptionsButton")
 	local ChestOpen
 	local ChestStealer = {["Enabled"] = false}
-	ChestStealer = GuiLibrary["ObjectsThatCanBeSaved"]["BlatantWindow"]["Api"].CreateOptionsButton({
+	ChestStealer = GuiLibrary["ObjectsThatCanBeSaved"]["WorldWindow"]["Api"].CreateOptionsButton({
 		["Name"] = "ChestStealer",
 		["Function"] = function(callback)
 			if callback then
@@ -764,16 +777,14 @@ runcode(function()
 	})
 end)
 
-skywars["EventHandler"].ProjectileFired:connect(function(player, arrow, position, direction, strength)
 
-end)
 
 runcode(function()
 	local oldDirection
 	local oldStrength
 	local predict = {["Enabled"] = true}
 	local bowtesting = {["Enabled"] = false}
-	bowtesting = GuiLibrary["ObjectsThatCanBeSaved"]["UtilityWindow"]["Api"].CreateOptionsButton({
+	bowtesting = GuiLibrary["ObjectsThatCanBeSaved"]["CombatWindow"]["Api"].CreateOptionsButton({
 		["Name"] = "BowAimbot",
 		["HoverText"] = "aims bow automatically",
 		["Function"] = function(callback)
@@ -862,7 +873,7 @@ end)
 
 runcode(function()
 	local chestsallsteal = {["Enabled"] = false}
-	chestsallsteal = GuiLibrary["ObjectsThatCanBeSaved"]["UtilityWindow"]["Api"].CreateOptionsButton({
+	chestsallsteal = GuiLibrary["ObjectsThatCanBeSaved"]["WorldWindow"]["Api"].CreateOptionsButton({
 		["Name"] = "StealChests",
 		["HoverText"] = "all chests",
 		["Function"] = function(callback)
