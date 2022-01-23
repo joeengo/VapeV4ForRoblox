@@ -635,8 +635,8 @@ runcode(function()
 								end
 							until false
 						end)
+						skywars["EventHandler"].UpdateMatchmakingStatus:fire(true)
 					end
-					skywars["EventHandler"].UpdateMatchmakingStatus:fire(true)
 				end)
 			else
 				if label then 
@@ -777,8 +777,6 @@ runcode(function()
 	})
 end)
 
-
-
 runcode(function()
 	local oldDirection
 	local oldStrength
@@ -796,10 +794,10 @@ runcode(function()
 						local v4 = GetNearestHumanoidToMouse(true, 99999999999, true)
 						if v4 then
 							local v5 = v4.Character.PrimaryPart.Position
-							v5 = v5 + Vector3.new(0, ((v5 - lplr.Character.PrimaryPart.Position).Magnitude) / 14, 0)
+							v5 = v5 + Vector3.new(0, ((v5 - lplr.Character.PrimaryPart.Position).Magnitude) / 12, 0)
 							if predict["Enabled"] then
-								local dir = (v4.Character.HumanoidRootPart.Velocity.X == 0 and Vector3.new(0, 0, 0) or Vector3.new(v4.Character.Humanoid.MoveDirection.X * v4.Character.Humanoid.WalkSpeed, v4.Character.HumanoidRootPart.Velocity.Y, v4.Character.Humanoid.MoveDirection.Z * v4.Character.Humanoid.WalkSpeed))
-								dir = Vector3.new(dir.X / 3, dir.Y / 4.5, dir.Z / 3) -- workout prediction
+								local dir = (v4.Character.HumanoidRootPart.Velocity == Vector3.new(0,0,0) and Vector3.new(0, 0, 0) or Vector3.new(v4.Character.Humanoid.MoveDirection.X * v4.Character.Humanoid.WalkSpeed, v4.Character.HumanoidRootPart.Velocity.Y / 1.5, v4.Character.Humanoid.MoveDirection.Z * v4.Character.Humanoid.WalkSpeed))
+								dir = Vector3.new(dir.X / 2.4, dir.Y / 4.6, dir.Z / 2.4) -- workout prediction
 								v5 = v5 + dir
 							end
 							local v6 = cam:WorldToViewportPoint(v5)
