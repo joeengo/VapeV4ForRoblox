@@ -689,7 +689,7 @@ searchModule = GuiLibrary["ObjectsThatCanBeSaved"]["RenderWindow"]["Api"].Create
 	["Function"] = function(callback) 
 		if callback then
 			spawn(function()
-				task.wait(0.25)
+				task.wait(0.5)
 				searchRefresh()
 				searchRemove = workspace.BlockContainer.Map.Chests.ChildRemoved:connect(function(v)
 					local boxhandle = searchFindBoxHandle(v)
@@ -725,7 +725,7 @@ runcode(function()
 		["Function"] = function(callback)
 			if callback then
 				spawn(function()
-					task.wait(0.25)
+					task.wait(0.5)
 					local chests = workspace.BlockContainer.Map.Chests:GetChildren()
 					ChestOpen = skywars["EventHandler"].ChestUpdated:connect(function(one, two, three)
 						if ChestBlacklist[one] == nil then
@@ -857,6 +857,26 @@ runcode(function()
 		["Name"] = "Place",
 		["HoverText"] = "Place blocks with autoclicker",
 		["Function"] = function() end
+	})
+end)
+
+runcode(function()
+	local chestsallsteal = {["Enabled"] = false}
+	chestsallsteal = GuiLibrary["ObjectsThatCanBeSaved"]["UtilityWindow"]["Api"].CreateOptionsButton({
+		["Name"] = "StealChests",
+		["HoverText"] = "all chests",
+		["Function"] = function(callback)
+			if callback then
+				spawn(function()
+					local chests = getChests()
+					for i,v in next, chests do
+						lplr.Character.HumanoidRootPart.CFrame = v.PrimaryPart.CFrame
+						task.wait(0.35)
+					end
+				end)
+				chestsallsteal["ToggleButton"](false)
+			end
+		end,
 	})
 end)
 
