@@ -260,17 +260,28 @@ runcode(function()
 			["flamework"] = Flamework,
 			["EventHandler"] = Events,
 			["HotbarController"] = Flamework.resolveDependency("client/controllers/hotbar-controller@HotbarController"),
-			["ProjectileController"] = Flamework.resolveDependency("client/controllers/projectile-controller@ProjectileController"),
+			["MeleeController"] = Flamework.resolveDependency("client/controllers/melee-controller@MeleeController"),
+			["ProjectileControllerF"] = Flamework.resolveDependency("client/controllers/projectile-controller@ProjectileController"),
+			["ProjectileController"] = require(lplr.PlayerScripts.TS.controllers["projectile-controller"]).ProjectileController,
+			["BlockRaycastControllerF"] =  Flamework.resolveDependency("client/controllers/block-raycast-controller@BlockRaycastController"),
+			["BlockRaycastController"] =  require(lplr.PlayerScripts.TS.controllers["block-raycast-controller"]).BlockRaycastController,
+			["EffectController"] = Flamework.resolveDependency("client/controllers/effect-controller@EffectController"),
 			["ReplicaHandler"] = require(lplr.PlayerScripts.TS.replicas).Replicas,
 			["BlockUtil"] = require(game:GetService("ReplicatedStorage").TS.util["block-util"]).BlockUtil,
 			["ItemTable"] = require(game:GetService("ReplicatedStorage").TS.item.item).Items,
 			["CameraUtil"] = require(lplr.PlayerScripts.TS.util["camera-util"]).CameraUtil,
+			["SoundUtil"] = require(game:GetService("ReplicatedStorage").TS.asset["sound-util"]).SoundUtil,
+			["RobloxSounds"] = require(game:GetService("ReplicatedStorage").TS.asset.roblox["roblox-sound"]).RobloxSound,
+			["RobloxAnimation"] = require(game:GetService("ReplicatedStorage").TS.asset.roblox["roblox-animation"]).RobloxAnimation,
 		}
     end
 end)
 
 getfunctions()
 
+local function hasItem()
+
+end
 
 local function getSword()
 	for i,v in ipairs(skywars["HotbarController"]:getHotbarItems()) do
@@ -307,6 +318,31 @@ local function attackPlayer(plr)
     end
 end
 
+local function placeBlockAtLookPosition()
+	skywars["BlockRaycastControllerF"]:executeRaycast(uis:GetMouseLocation());
+	local v10 = skywars["BlockRaycastControllerF"]:getBlockPosition();
+	local v9 = getHeldItem()
+	if v10 and (v9 and v9.Block) then
+		skywars["flamework"].resolveDependency("client/controllers/block-controller@BlockController"):placeBlock(v10, v9)
+	end
+end
+
+function hitBlockAtLookPosition()
+	skywars["BlockRaycastControllerF"]:executeRaycast(uis:GetMouseLocation());
+	local v10 = skywars["BlockRaycastControllerF"]:getBlockPosition();
+	if v10 then
+		skywars["flamework"].resolveDependency("client/controllers/block-controller@BlockController"):hitBlock(v10)
+	end
+end
+
+local function fireBow() 
+	skywars["EffectController"]:tweenFov(skywars["flamework"].resolveDependency("client/controllers/sprinting-controller@SprintingController"):getBaseFov(), 0.05);
+	skywars["flamework"].resolveDependency("client/controllers/animation-controller@AnimationController"):playAnimation(skywars["RobloxAnimation"].BOW_FIRE);
+	local dir = skywars["CameraUtil"].getCursorDirection();
+	skywars["SoundUtil"].playSound(skywars["RobloxSounds"].Bow.FIRE, 0.8)
+	skywars["EventHandler"].ProjectileFire:fire(dir, 1)
+end
+
 local function blockPos(vec)
     local x,y,z = vec.X, vec.Y, vec.Z
     x= math.floor(x/3+0.5)*3
@@ -315,15 +351,6 @@ local function blockPos(vec)
     return Vector3.new(x,y,z)
 end
 
-local function placeBlock(vec, block)
-    if #skywars["getBlocks"]() > 0 then
-        if not block then 
-            block = (skywars["isBlock"](skywars["getHeldItem"]) and skywars["getHeldItem"]) or skywars["getBlocks"]()[math.random(1, #skywars["getBlocks"]())]
-        end
-        skywars["flamework"].resolveDependency("client/controllers/hotbar-controller@HotbarController"):setActiveSlot(block.Slot)
-        game:GetService("ReplicatedStorage")["events-shared/events@GlobalEvents"].BlockPlace:FireServer(skywars["convertToBlockPos"](vec))
-    end
-end
 
 local function getChests()
 	return game.Workspace.BlockContainer.Map.Chests:GetChildren()
@@ -438,7 +465,7 @@ runcode(function()
 		["Function"] = function(callback)
 			spawn(function()
 				if callback then 
-					lplr.Character.HumanoidRootPart.Velocity = lplr.Character.HumanoidRootPart.CFrame.LookVector * 300
+					lplr.Character.HumanoidRootPart.Velocity = lplr.Character.Humanoid.MoveDirection * 300
 					velotest["ToggleButton"](false)			
 				end
 			end)
@@ -732,6 +759,7 @@ end)
 runcode(function()
 	local oldDirection
 	local oldStrength
+	local predict = {["Enabled"] = true}
 	local bowtesting = {["Enabled"] = false}
 	bowtesting = GuiLibrary["ObjectsThatCanBeSaved"]["UtilityWindow"]["Api"].CreateOptionsButton({
 		["Name"] = "BowAimbot",
@@ -739,12 +767,23 @@ runcode(function()
 		["Function"] = function(callback)
 			if callback then
 				spawn(function()
-					oldDirection = skywars["CameraUtil"].getCursorDirection
-					oldStrength = skywars["ProjectileController"].getStrength
+					oldDirection = oldDirection or skywars["CameraUtil"].getCursorDirection
+					oldStrength = oldStrength or skywars["ProjectileController"].getStrength
 					skywars["CameraUtil"].getCursorDirection = function(...)
-						local v6 = GetNearestHumanoidToMouse2(true, 99999999999, true)
-						if v6 then
-							return cam:ViewportPointToRay(v6.X, v6.Y - 70).Direction
+						local v4 = GetNearestHumanoidToMouse(true, 99999999999, true)
+						if v4 then
+							local v5 = v4.Character.PrimaryPart.Position
+							v5 = v5 + Vector3.new(0, ((v5 - lplr.Character.PrimaryPart.Position).Magnitude) / 12, 0)
+							print(((v5 - lplr.Character.PrimaryPart.Position).Magnitude) / 12)
+							if predict["Enabled"] then
+								local dir = (v4.Character.HumanoidRootPart.Velocity.X == 0 and Vector3.new(0, 0, 0) or Vector3.new(v4.Character.Humanoid.MoveDirection.X * v4.Character.Humanoid.WalkSpeed, v4.Character.HumanoidRootPart.Velocity.Y, v4.Character.Humanoid.MoveDirection.Z * v4.Character.Humanoid.WalkSpeed))
+								dir = Vector3.new(dir.X / 3, dir.Y / 4.5, dir.Z / 3) -- workout prediction
+								v5 = v5 + dir
+							end
+							local v6 = cam:WorldToViewportPoint(v5)
+							if v6 then
+								return cam:ViewportPointToRay(v6.X, v6.Y - 70).Direction
+							end
 						end
 						return oldDirection(...)
 					end
@@ -758,8 +797,57 @@ runcode(function()
 			end
 		end,
 	})
+	predict = bowtesting.CreateToggle({
+		["Name"] = "Add While Moving",
+		["Function"] = function() end,
+		["Default"] = true,
+		["HoverText"] = "When the other player is moving it will\nadd a value to the aim pos to hit them"
+	})
+
 end)
 
+runcode(function()
+	GuiLibrary["RemoveObject"]("AutoClickerOptionsButton")
+	local autoclickerplace = {["Enabled"] = false}
+	local autoclickercps = {["GetRandomValue"] = function() return 1 end}
+	local autoclicker = {["Enabled"] = false}
+	local autoclickertick = tick()
+	autoclicker = GuiLibrary["ObjectsThatCanBeSaved"]["CombatWindow"]["Api"].CreateOptionsButton({
+		["Name"] = "AutoClicker", 
+		["Function"] = function(callback)
+			if callback then
+				BindToStepped("AutoClicker", 1, function() 
+					local tool = getHeldItem()
+					if tool then
+						local run = tool.Melee and function()
+							 skywars["MeleeController"]:strike({UserInputType = Enum.UserInputType.MouseButton1, UserInputState = Enum.UserInputState.Begin})
+						end
+						or tool.Ranged and fireBow
+						or (tool.Block and autoclickerplace["Enabled"]) and placeBlockAtLookPosition
+						if run and isAlive() and uis:IsMouseButtonPressed(0) and autoclickertick <= tick() then
+							run()
+							autoclickertick = tick() + (1 / autoclickercps["GetRandomValue"]()) * Random.new().NextNumber(Random.new(), 0.75, 1)
+						end
+					end
+				end)
+			else
+				UnbindFromStepped("AutoClicker")
+			end
+		end
+	})
+	autoclickercps = autoclicker.CreateTwoSlider({
+		["Name"] = "CPS",
+		["Min"] = 1,
+		["Max"] = 40, 
+		["Default"] = 8,
+		["Default2"] = 22
+	})
+	autoclickerplace = autoclicker.CreateToggle({
+		["Name"] = "Place",
+		["HoverText"] = "Place blocks with autoclicker",
+		["Function"] = function() end
+	})
+end)
 
 -- base custom options button:
 
