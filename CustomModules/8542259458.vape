@@ -1,4 +1,5 @@
 repeat wait() until game:IsLoaded()
+if true then print("engo vape is discontinued, copy the script at https://github.com/joeengo/VapeV4ForRoblox/blob/main/Uninstall.lua and run it"); return; end
 
 local GuiLibrary = shared.GuiLibrary
 local players = game:GetService("Players")
