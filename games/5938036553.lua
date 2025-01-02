@@ -617,7 +617,11 @@ run(function()
 		Max = 1000,
 		Default = 150,
 		Suffix = function(val) 
-			return val == 1 and 'stud' or 'studs' 
+			if Mode.Value == 'Position' then
+				return val == 1 and 'stud' or 'studs' 
+			end
+
+			return 'px'
 		end,
 		Function = function(val)
 			if CircleObject then
